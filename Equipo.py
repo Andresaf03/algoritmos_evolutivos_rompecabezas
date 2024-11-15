@@ -3,6 +3,7 @@ SI LAS PIEZAS EMPATAN, CHECAS LA IMAGEN (ESTO ES -1 Y 1 LUEGO CHECAS POR ID SOLO
 '''
 import random
 from copy import deepcopy
+import time
 
 # Definimos una excepción personalizada
 class PiezaNoValidaError(Exception):
@@ -91,16 +92,20 @@ class Pieza:
         """Conecta esta pieza con otra independientemente de los valores"""
         if direccion == "arriba":
             self.arriba = otra_pieza
-            otra_pieza.abajo = self
+            if otra_pieza != None:
+                otra_pieza.abajo = self
         elif direccion == "abajo":
             self.abajo = otra_pieza
-            otra_pieza.arriba = self
+            if otra_pieza != None:
+                otra_pieza.arriba = self
         elif direccion == "izquierda":
             self.izquierda = otra_pieza
-            otra_pieza.derecha = self
+            if otra_pieza != None:
+                otra_pieza.derecha = self
         elif direccion == "derecha":
             self.derecha = otra_pieza
-            otra_pieza.izquierda = self
+            if otra_pieza != None:
+                otra_pieza.izquierda = self
     
     def __str__(self):
         return f"Pieza {self.id} ({self.posicion}) -> {self.extremos}"
@@ -125,7 +130,7 @@ def crear_grafo_solucion(matriz_ids):
             
             id_pieza = matriz_ids[i][j]
             pieza = Pieza(arriba, abajo, izquierda, derecha, id_pieza)
-            pieza.posicion = (i, j)
+            pieza.posicion = [i+1, j+1]
             
             piezas[id_pieza] = pieza
             matriz_piezas[i][j] = pieza
@@ -202,7 +207,7 @@ def crear_grafo_random(matriz_ids, piezas_solucion):
         for j in range(m):
             id_pieza = matriz_ids[i][j]
             pieza = piezas_por_id[id_pieza]
-            pieza.posicion = (i, j)
+            pieza.posicion = [i+1, j+1]
             pieza.arriba = None
             pieza.abajo = None
             pieza.izquierda = None
@@ -222,7 +227,7 @@ def crear_grafo_random(matriz_ids, piezas_solucion):
             if j > 0:  # Conectar con pieza de la izquierda
                 pieza_actual.conectar_con(matriz_piezas[i][j-1], "izquierda")
     
-    return list(piezas.values()), matriz_piezas
+    return matriz_piezas
 
 def verificar_conexiones(matriz_piezas):
     """
@@ -239,7 +244,7 @@ def verificar_conexiones(matriz_piezas):
             # Verificar conexión superior
             if i > 0:
                 pieza_arriba = matriz_piezas[i-1][j]
-                if pieza.extremos["arr"] + pieza_arriba.extremos["aba"] != 0:
+                if pieza.extremos["arr"] + pieza_arriba.extremos["aba"] != 0 or (pieza_arriba.extremos["aba"] == 0 and pieza.extremos["arr"] == 0):
                     conexiones_incorrectas.append(
                         f"Conexión incorrecta entre {pieza.id} y {pieza_arriba.id} (arriba)"
                     )
@@ -247,7 +252,7 @@ def verificar_conexiones(matriz_piezas):
             # Verificar conexión izquierda
             if j > 0:
                 pieza_izq = matriz_piezas[i][j-1]
-                if pieza.extremos["izq"] + pieza_izq.extremos["der"] != 0:
+                if pieza.extremos["izq"] + pieza_izq.extremos["der"] != 0 or (pieza_izq.extremos["der"] == 0 and pieza.extremos["izq"] == 0):
                     conexiones_incorrectas.append(
                         f"Conexión incorrecta entre {pieza.id} y {pieza_izq.id} (izquierda)"
                     )
@@ -318,7 +323,7 @@ class Rompecabezas:
                 if j == 0:
                     if pieza_actual.extremos['izq'] != 0:
                         contador_fit += 1
-                if j == 0:
+                if j == m-1:
                     if pieza_actual.extremos['der'] != 0:
                         contador_fit += 1
 
@@ -335,35 +340,134 @@ class Rompecabezas:
                     if pieza_actual.extremos["izq"] + pieza_izq.extremos["der"] != 0 or (pieza_izq.extremos["der"] == 0 and pieza_actual.extremos["izq"] == 0):
                         contador_fit += 1
 
+                if pieza_actual.id != (pieza_actual.posicion[0]-1)*m + pieza_actual.posicion[1]:
+                    contador_fit += 4 # Modificar peso a futuro
+
         return contador_fit
 
-    def mutacion():
-        pass
+    def mutacion(self, matriz_original):
+        matriz_piezas = deepcopy(matriz_original)
+        n = len(matriz_piezas)
+        m = len(matriz_piezas[0])
 
-    def apareamiento():
-        pass
+        n_mut = random.randint(1,5)
+        for _ in range(n_mut):
+            i = random.randint(0,n-1)
+            j = random.randint(0,m-1)
+            h = random.randint(0,n-1)
+            k = random.randint(0,m-1)
+            aux = matriz_piezas[i][j]
+            matriz_piezas[i][j] = matriz_piezas[h][k]
+            matriz_piezas[h][k] = aux
 
-    def algoritmo_evolutivo():
-        pass
+            matriz_piezas[i][j].posicion[0] = i+1
+            matriz_piezas[i][j].posicion[1] = j+1
+
+            matriz_piezas[h][k].posicion[0] = h+1
+            matriz_piezas[h][k].posicion[1] = k+1
+            
+            if i>0:
+                matriz_piezas[i][j].conectar_con(matriz_piezas[i-1][j], 'arriba')
+            else:
+                matriz_piezas[i][j].conectar_con(None, 'arriba')
+
+            if i<n-1:
+                matriz_piezas[i][j].conectar_con(matriz_piezas[i+1][j], 'abajo')
+            else:
+                matriz_piezas[i][j].conectar_con(None, 'abajo')
+
+            if j>0:
+                matriz_piezas[i][j].conectar_con(matriz_piezas[i][j-1], 'izquierda')
+            else:
+                matriz_piezas[i][j].conectar_con(None, 'izquierda')
+
+            if j<m-1:
+                matriz_piezas[i][j].conectar_con(matriz_piezas[i][j+1], 'derecha')
+            else:
+                matriz_piezas[i][j].conectar_con(None, 'derecha')
+
+
+            if h>0:
+                matriz_piezas[h][k].conectar_con(matriz_piezas[h-1][k], 'arriba')
+            else:
+                matriz_piezas[h][k].conectar_con(None, 'arriba')
+
+            if h<n-1:
+                matriz_piezas[h][k].conectar_con(matriz_piezas[h+1][k], 'abajo')
+            else:
+                matriz_piezas[h][k].conectar_con(None, 'abajo')
+
+            if k > 0:
+                matriz_piezas[h][k].conectar_con(matriz_piezas[h][k-1], 'izquierda')
+            else:
+                matriz_piezas[h][k].conectar_con(None, 'izquierda')
+
+            if k<m-1:
+                matriz_piezas[h][k].conectar_con(matriz_piezas[h][k+1], 'derecha')
+            else:
+                matriz_piezas[h][k].conectar_con(None, 'derecha')
+        
+        return matriz_piezas
+
+    def algoritmo_evolutivo(self, num_n, num_m, matriz_sol):
+        piezas_solucion, matriz_solucion = crear_grafo_solucion(matriz_sol)
+        min_fitness = num_m*num_n
+        arreglo_matriz = []
+        pob = 50
+        while min_fitness !=0:
+            arreglo_fitness = []
+            if not arreglo_matriz:
+                for i in range(pob):
+                    matriz_random = Matriz(num_n, num_m, True)
+                    matriz_random = matriz_random.matriz
+                    matriz_random = crear_grafo_random(matriz_random, piezas_solucion)
+                    arreglo_matriz.append(matriz_random)
+            
+            num_mut = random.randint(1,pob)
+            random_list = [random.randint(0, pob-1) for _ in range(num_mut)]
+            for num in random_list:
+                arreglo_matriz.append(self.mutacion(arreglo_matriz[num]))
+            
+            for i in range(len(arreglo_matriz)):
+                arreglo_fitness.append(self.fitness(arreglo_matriz[i]))
+            
+            indices_peores = obtener_indices_peores(arreglo_fitness, num_mut)
+
+            for indice in sorted(indices_peores, reverse=True):  # Eliminar de mayor a menor para no afectar los índices
+                arreglo_matriz.pop(indice)
+                arreglo_fitness.pop(indice)
+            
+            min_fitness = min(arreglo_fitness)
+            indice = arreglo_fitness.index(min_fitness)
+            print(min_fitness)
+        
+        return arreglo_matriz[indice]
+
+def obtener_indices_peores(lista_fitness, num_mut):
+    
+   # Crear lista de tuplas (valor, índice)
+    valores_indices = [(valor, i) for i, valor in enumerate(lista_fitness)]
+    
+    # Ordenar por valor de fitness (mayor a menor)
+    valores_indices.sort(reverse=True)
+    
+    # Tomar los primeros num_mut índices
+    indices_peores = [i for _, i in valores_indices[:num_mut]]
+    
+    return indices_peores
 
 
 def main():
-    matriz_o = Matriz(2,3)
+    n = 10
+    m = 8
+    matriz_o = Matriz(n,m)
     matriz_o = matriz_o.matriz
 
-    matriz_d = Matriz(2,3, True)
-    matriz_d = matriz_d.matriz
-    
-    print("Grafo Solución:")
-    piezas_solucion, matriz_solucion = crear_grafo_solucion(matriz_o)
-    visualizar_matriz(matriz_solucion)
-    
-    print("\nGrafo Reorganizado:")
-    piezas_random, matriz_random = crear_grafo_random(matriz_d, piezas_solucion)
-    visualizar_matriz(matriz_random)
-
     rompe = Rompecabezas()
-    print(rompe.fitness(matriz_random))
+    start_time = time.time()
+    matriz_final = rompe.algoritmo_evolutivo(n,m, matriz_o)
+    visualizar_matriz(matriz_final)
+    print(f"Tiempo Total: {time.time()-start_time}")
 
 # Ejemplo de uso
 if __name__ == "__main__":
