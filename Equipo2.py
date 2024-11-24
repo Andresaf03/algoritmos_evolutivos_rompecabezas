@@ -1,12 +1,31 @@
 '''
 Importamos las librerías necesarias para realizar el algoritmo evolutivo.
 - random: librería para generar números aleatorios, será útil al realizar la mutación y crear el rompecabezas.
-- copy: librería para realizar copias de objetos, será útil al realizar la mutación y crear el rompecabezas.
 - time: librería para medir el tiempo de ejecución y de esta manera optimizarlo al variar los parámetros del algoritmo evolutivo.
 '''
 import random
-from copy import deepcopy
 import time
+
+def copiar_matriz(matriz_original):
+    """
+    Crea una copia profunda de una matriz de objetos Pieza.
+    Entrada:
+    - matriz_original (list): Matriz de objetos Pieza a copiar.
+    Salida:
+    - copia_matriz (list): Nueva matriz con copias independientes de las piezas.
+    """
+    n = len(matriz_original)
+    m = len(matriz_original[0])
+    copia_matriz = [[None for _ in range(m)] for _ in range(n)]
+    
+    for i in range(n):
+        for j in range(m):
+            pieza_original = matriz_original[i][j]
+            copia_pieza = pieza_original.copiar()  # Usamos el método copiar de la clase Pieza.
+            copia_pieza.posicion = [i + 1, j + 1]  # Ajustamos la posición de la pieza copiada.
+            copia_matriz[i][j] = copia_pieza
+    
+    return copia_matriz
 
 class PiezaNoValidaError(Exception):
     '''
@@ -126,6 +145,20 @@ class Pieza:
         self.extremos = {"izq":v_izquierda, "der": v_derecha, "arr": v_arriba, "aba": v_abajo}
         self.id = id_pieza
         self.posicion = None  # (fila, columna), por el momento vacía pues no pertenece a ningún rompecabezas.
+    
+    def copiar(self):
+        """
+        Crea una copia de la pieza actual, sin las conexiones.
+        Entrada: Ninguna.
+        Salida: Una nueva instancia de Pieza con los mismos atributos, excepto las conexiones.
+        """
+        return Pieza(
+            v_arriba=self.extremos["arr"],
+            v_abajo=self.extremos["aba"],
+            v_izquierda=self.extremos["izq"],
+            v_derecha=self.extremos["der"],
+            id_pieza=self.id
+        )
     
     def conectar_con(self, otra_pieza, direccion):
         '''
@@ -267,7 +300,7 @@ class Rompecabezas:
         matriz_piezas = [[None for _ in range(m)] for _ in range(n)] # Crear matriz de piezas vacía.
         
         # Crear un diccionario de piezas solución por identificador.
-        piezas_por_id = {pieza.id: deepcopy(pieza) for pieza in piezas_solucion}
+        piezas_por_id = {pieza.id: pieza.copiar() for pieza in piezas_solucion}
         
         # Colocar las piezas según la matriz de identificadores aletorios.
         for i in range(n):
@@ -413,7 +446,7 @@ class Rompecabezas:
         Entrada: matriz_original (matriz) matriz de piezas original.
         Salida: matriz_piezas (matriz) matriz de piezas mutada.
         '''
-        matriz_piezas = deepcopy(matriz_original) # Realizamos una copia de la matriz para no modificar la original.
+        matriz_piezas = copiar_matriz(matriz_original) # Realizamos una copia de la matriz para no modificar la original.
         n = len(matriz_piezas)
         m = len(matriz_piezas[0])
 
@@ -619,8 +652,13 @@ class Optimizar:
 
 def main():
     # Dimensiones del rompecabezas.
-    n, m = 5, 5
-    # Crear una instancia de Optimizar con las dimensiones del rompecabezas
+    n, m = 15, 15
+    #Argumentos por si no queremos optimizar.
+    poblacion_optima = 1
+    ratio_mutacion_optimo = 1
+    
+    '''
+    # Crear una instancia de Optimizar con las dimensiones del rompecabezas. Se recomienda usar menos de 200 piezas.
     optimizador = Optimizar(n, m)
     
     # Ejecutar la optimización.
@@ -630,6 +668,7 @@ def main():
     print("\nParámetros óptimos encontrados:")
     print(f"Población: {poblacion_optima}")
     print(f"Ratio de mutación: {ratio_mutacion_optimo:.2f}")
+    '''
     
     # Crear un rompecabezas con los parámetros óptimos, para que lo solucione lo más rápido posible.
     Rompecabezas(n, m, poblacion_optima, ratio_mutacion_optimo) 
