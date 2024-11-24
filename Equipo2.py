@@ -205,9 +205,10 @@ class Rompecabezas:
         self.m = m
         self.matriz_solucion = Matriz(n, m).matriz # Crear una matriz secuencial para el rompecabezas solución.
         self.tiempo_inicio = time.time() # Iniciar el contador de tiempo para optimizar parámetros.
-        self.matriz_final = self.algoritmo_evolutivo(n, m, self.matriz_solucion, poblacion, ratio_mut) # Resolver el rompecabezas, a partir de la matriz solución y los parámetros de población y ratio de mutación.
+        self.matriz_final, self.generaciones = self.algoritmo_evolutivo(n, m, self.matriz_solucion, poblacion, ratio_mut) # Resolver el rompecabezas, a partir de la matriz solución y los parámetros de población y ratio de mutación.
         self.visualizar_rompecabezas(self.matriz_final) # Proyectar el rompecabezas resuelto.
         print(f"Tiempo Total: {time.time() - self.tiempo_inicio} segundos.") # Mostrar el tiempo total de ejecución.
+        print(f"Generaciones: {self.generaciones}") # Mostrar el número de generaciones necesarias para resolver el rompecabezas.
     
     def crear_grafo_solucion(self, matriz_ids):
         """
@@ -524,6 +525,7 @@ class Rompecabezas:
         piezas_solucion, matriz_solucion = self.crear_grafo_solucion(matriz_sol)
         min_fitness = (num_n*num_m)*4 + (num_n*num_m) + (num_n-1)*num_m + (num_m-1)*num_n # Iniciamos el valor de fitness mínimo con el máximo posible.
         arreglo_rompecabezas = []
+        generaciones = 0
         
         while min_fitness !=0: # Mientras no se haya resuelto el rompecabezas, es decir, no hemos minimizado el valor de la función fitness.
             arreglo_fitness = []
@@ -551,8 +553,9 @@ class Rompecabezas:
             min_fitness = min(arreglo_fitness) # Obtenemos el valor mínimo de la función fitness de los rompecabezas de la población.
             indice = arreglo_fitness.index(min_fitness) # Obtenemos el rompecabezas con valor de función fitness mínimo.
             print(min_fitness) # Lo imprimimos para ver el avance hacia una solución.
+            generaciones += 1
         
-        return arreglo_rompecabezas[indice] # Si el ciclo se termina, regresamos el rompecabezas resuelto.
+        return arreglo_rompecabezas[indice], generaciones # Si el ciclo se termina, regresamos el rompecabezas resuelto.
 
 def obtener_indices_peores(lista_fitness, num_mut):
     '''
@@ -652,13 +655,14 @@ class Optimizar:
 
 def main():
     # Dimensiones del rompecabezas.
-    n, m = 20, 10
+    n, m = 10, 10
     #Argumentos por si no queremos optimizar.
     poblacion_optima = 1
     ratio_mutacion_optimo = 1
     
     '''
-    # Crear una instancia de Optimizar con las dimensiones del rompecabezas. Se recomienda usar menos de 200 piezas.
+    # Crear una instancia de Optimizar con las dimensiones del rompecabezas. 
+    # Se recomienda usar menos de 100 piezas (y en casos de muchas piezas, menos generaciones, i.e de 2 a 5).
     optimizador = Optimizar(n, m)
     
     # Ejecutar la optimización.
@@ -672,7 +676,7 @@ def main():
     
     # Crear un rompecabezas con los parámetros óptimos, para que lo solucione lo más rápido posible.
     Rompecabezas(n, m, poblacion_optima, ratio_mutacion_optimo) 
-    print(f"parámetros: \n población: {poblacion_optima} \n ratio de mutación: {ratio_mutacion_optimo}")
+    print(f"Parámetros: \n población: {poblacion_optima} \n ratio de mutación: {ratio_mutacion_optimo}")
     
 if __name__ == "__main__":
     main()
