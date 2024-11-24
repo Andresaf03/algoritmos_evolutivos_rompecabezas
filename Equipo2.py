@@ -162,7 +162,7 @@ class Rompecabezas:
     '''
     Definimos la clase Rompecabezas, la cual nos permitirá realizar el algoritmo evolutivo para resolver el rompecabezas.
     '''
-    def __init__(self, n, m):
+    def __init__(self, n, m, poblacion=1, ratio_mut=1):
         '''
         Constructor de la clase Rompecabezas, crea un rompecabezas solución a partir de una matriz secuencial y luego utiliza el algoritmo evolutivo para resolverlo. 
         Entrada: n (int) número de renglones del rompecabezas, m (int) número de columnas del rompecabezas.
@@ -172,10 +172,9 @@ class Rompecabezas:
         self.m = m
         self.matriz_solucion = Matriz(n, m).matriz # Crear una matriz secuencial para el rompecabezas solución.
         self.tiempo_inicio = time.time() # Iniciar el contador de tiempo para optimizar parámetros.
-        self.matriz_final = self.algoritmo_evolutivo(n, m, self.matriz_solucion) # Resolver el rompecabezas, a partir de la matriz solución.
+        self.matriz_final = self.algoritmo_evolutivo(n, m, self.matriz_solucion, poblacion, ratio_mut) # Resolver el rompecabezas, a partir de la matriz solución y los parámetros de población y ratio de mutación.
         self.visualizar_rompecabezas(self.matriz_final) # Proyectar el rompecabezas resuelto.
         print(f"Tiempo Total: {time.time() - self.tiempo_inicio} segundos.") # Mostrar el tiempo total de ejecución.
-    
     
     def crear_grafo_solucion(self, matriz_ids):
         """
@@ -404,13 +403,10 @@ class Rompecabezas:
 
                 # Si la pieza no está en la posición correcta.
                 if pieza_actual.id != (pieza_actual.posicion[0]-1)*m + pieza_actual.posicion[1]:
-                    contador_fit += 4 # Modificar peso a futuro
+                    contador_fit += 4 
 
         return contador_fit
 
-    '''
-    SI LAS PIEZAS EMPATAN, CHECAS LA IMAGEN (ESTO ES -1 Y 1 LUEGO CHECAS POR ID SOLO SI ESTA CONDICION OCURRE)
-    '''
     def mutacion(self, matriz_original):
         '''
         Realiza una mutación en la matriz de piezas, intercambiando dos piezas aleatorias.
@@ -421,88 +417,93 @@ class Rompecabezas:
         n = len(matriz_piezas)
         m = len(matriz_piezas[0])
 
-        n_mut = random.randint(1, min(n, m)//5) # Definimos el número de mutaciones aleatorio, dependiendo del tamaño del rompecabezas.
-        for _ in range(n_mut):
-            # Seleccionamos dos piezas aleatorias a través de índices aleatorios.
-            i = random.randint(0,n-1) 
-            j = random.randint(0,m-1)
-            h = random.randint(0,n-1)
-            k = random.randint(0,m-1)
-            # Intercambiamos las piezas.
-            aux = matriz_piezas[i][j]
-            matriz_piezas[i][j] = matriz_piezas[h][k]
-            matriz_piezas[h][k] = aux
+        # Seleccionamos dos piezas aleatorias a través de índices aleatorios.
+        i = random.randint(0,n-1) 
+        j = random.randint(0,m-1)
+        h = random.randint(0,n-1)
+        k = random.randint(0,m-1)
+        # Intercambiamos las piezas.
+        aux = matriz_piezas[i][j]
+        matriz_piezas[i][j] = matriz_piezas[h][k]
+        matriz_piezas[h][k] = aux
 
-            # Actualizamos las posiciones de las piezas.
-            matriz_piezas[i][j].posicion[0] = i+1
-            matriz_piezas[i][j].posicion[1] = j+1
-            matriz_piezas[h][k].posicion[0] = h+1
-            matriz_piezas[h][k].posicion[1] = k+1
-            
-            # Actualizamos las conexiones de las segunda pieza intercambiada.
-            if i>0: # Si no es el borde superior, la conectamos con la pieza de arriba, de otra forma con una vacía.
-                matriz_piezas[i][j].conectar_con(matriz_piezas[i-1][j], 'arriba')
-            else:
-                matriz_piezas[i][j].conectar_con(None, 'arriba') 
+        # Actualizamos las posiciones de las piezas.
+        matriz_piezas[i][j].posicion[0] = i+1
+        matriz_piezas[i][j].posicion[1] = j+1
+        matriz_piezas[h][k].posicion[0] = h+1
+        matriz_piezas[h][k].posicion[1] = k+1
+        
+        # Actualizamos las conexiones de las segunda pieza intercambiada.
+        if i>0: # Si no es el borde superior, la conectamos con la pieza de arriba, de otra forma con una vacía.
+            matriz_piezas[i][j].conectar_con(matriz_piezas[i-1][j], 'arriba')
+        else:
+            matriz_piezas[i][j].conectar_con(None, 'arriba') 
 
-            if i<n-1: # Si no es el borde inferior, la conectamos con la pieza de abajo, de otra forma con una vacía.
-                matriz_piezas[i][j].conectar_con(matriz_piezas[i+1][j], 'abajo')
-            else:
-                matriz_piezas[i][j].conectar_con(None, 'abajo')
+        if i<n-1: # Si no es el borde inferior, la conectamos con la pieza de abajo, de otra forma con una vacía.
+            matriz_piezas[i][j].conectar_con(matriz_piezas[i+1][j], 'abajo')
+        else:
+            matriz_piezas[i][j].conectar_con(None, 'abajo')
 
-            if j>0: # Si no es el borde izquierdo, la conectamos con la pieza de la izquierda, de otra forma con una vacía.
-                matriz_piezas[i][j].conectar_con(matriz_piezas[i][j-1], 'izquierda')
-            else:
-                matriz_piezas[i][j].conectar_con(None, 'izquierda')
+        if j>0: # Si no es el borde izquierdo, la conectamos con la pieza de la izquierda, de otra forma con una vacía.
+            matriz_piezas[i][j].conectar_con(matriz_piezas[i][j-1], 'izquierda')
+        else:
+            matriz_piezas[i][j].conectar_con(None, 'izquierda')
 
-            if j<m-1: # Si no es el borde derecho, la conectamos con la pieza de la derecha, de otra forma con una vacía.
-                matriz_piezas[i][j].conectar_con(matriz_piezas[i][j+1], 'derecha')
-            else:
-                matriz_piezas[i][j].conectar_con(None, 'derecha')
+        if j<m-1: # Si no es el borde derecho, la conectamos con la pieza de la derecha, de otra forma con una vacía.
+            matriz_piezas[i][j].conectar_con(matriz_piezas[i][j+1], 'derecha')
+        else:
+            matriz_piezas[i][j].conectar_con(None, 'derecha')
 
-            # Actualizamos las conexiones de las primera pieza intercambiada.
-            if h>0: # Si no es el borde superior, la conectamos con la pieza de arriba, de otra forma con una vacía.
-                matriz_piezas[h][k].conectar_con(matriz_piezas[h-1][k], 'arriba')
-            else:
-                matriz_piezas[h][k].conectar_con(None, 'arriba')
+        # Actualizamos las conexiones de las primera pieza intercambiada.
+        if h>0: # Si no es el borde superior, la conectamos con la pieza de arriba, de otra forma con una vacía.
+            matriz_piezas[h][k].conectar_con(matriz_piezas[h-1][k], 'arriba')
+        else:
+            matriz_piezas[h][k].conectar_con(None, 'arriba')
 
-            if h<n-1: # Si no es el borde inferior, la conectamos con la pieza de abajo, de otra forma con una vacía.
-                matriz_piezas[h][k].conectar_con(matriz_piezas[h+1][k], 'abajo')
-            else:
-                matriz_piezas[h][k].conectar_con(None, 'abajo')
+        if h<n-1: # Si no es el borde inferior, la conectamos con la pieza de abajo, de otra forma con una vacía.
+            matriz_piezas[h][k].conectar_con(matriz_piezas[h+1][k], 'abajo')
+        else:
+            matriz_piezas[h][k].conectar_con(None, 'abajo')
 
-            if k > 0: # Si no es el borde izquierdo, la conectamos con la pieza de la izquierda, de otra forma con una vacía.
-                matriz_piezas[h][k].conectar_con(matriz_piezas[h][k-1], 'izquierda')
-            else:
-                matriz_piezas[h][k].conectar_con(None, 'izquierda')
+        if k > 0: # Si no es el borde izquierdo, la conectamos con la pieza de la izquierda, de otra forma con una vacía.
+            matriz_piezas[h][k].conectar_con(matriz_piezas[h][k-1], 'izquierda')
+        else:
+            matriz_piezas[h][k].conectar_con(None, 'izquierda')
 
-            if k<m-1: # Si no es el borde derecho, la conectamos con la pieza de la derecha, de otra forma con una vacía.
-                matriz_piezas[h][k].conectar_con(matriz_piezas[h][k+1], 'derecha')
-            else:
-                matriz_piezas[h][k].conectar_con(None, 'derecha')
+        if k<m-1: # Si no es el borde derecho, la conectamos con la pieza de la derecha, de otra forma con una vacía.
+            matriz_piezas[h][k].conectar_con(matriz_piezas[h][k+1], 'derecha')
+        else:
+            matriz_piezas[h][k].conectar_con(None, 'derecha')
         
         return matriz_piezas
 
-    def algoritmo_evolutivo(self, num_n, num_m, matriz_sol):
+    def algoritmo_evolutivo(self, num_n, num_m, matriz_sol, poblacion=1, ratio_mut=1):
         '''
         Realiza el algoritmo evolutivo para resolver el rompecabezas.
-        Entrada: num_n (int) número de renglones del rompecabezas, num_m (int) número de columnas del rompecabezas, matriz_sol (matriz) matriz solución del rompecabezas.
+        Entrada: 
+            num_n (int) número de renglones del rompecabezas, 
+            num_m (int) número de columnas del rompecabezas, 
+            matriz_sol (matriz) matriz solución del rompecabezas, 
+            poblacion (int): tamaño de la población inicial, 
+            ratio_mut (float): proporción de rompecabezas mutados en cada generación.
         Salida: matriz_piezas (matriz) matriz de piezas resueltas.
         '''
         piezas_solucion, matriz_solucion = self.crear_grafo_solucion(matriz_sol)
         min_fitness = (num_n*num_m)*4 + (num_n*num_m) + (num_n-1)*num_m + (num_m-1)*num_n # Iniciamos el valor de fitness mínimo con el máximo posible.
         arreglo_rompecabezas = []
-        pob = 50 # Definimos el tamaño de la población inicial.
+        
         while min_fitness !=0: # Mientras no se haya resuelto el rompecabezas, es decir, no hemos minimizado el valor de la función fitness.
             arreglo_fitness = []
             if not arreglo_rompecabezas: # Solo se crea en la primera generación.
-                for i in range(pob): # Creamos la población inicial, es decir, pob-número de rompecabezas con las piezas aleatorizadas.
+                for i in range(poblacion): # Creamos la población inicial, es decir, pob-número de rompecabezas con las piezas aleatorizadas.
                     matriz_aleatoria = Matriz(num_n, num_m, True).matriz
                     rompecabezas_aleatorio = self.crear_grafo_aleatorio(matriz_aleatoria, piezas_solucion)
                     arreglo_rompecabezas.append(rompecabezas_aleatorio) # Guardamos el rompecabezas aleatoria en el arreglo.
+                    
             
-            num_mut = random.randint(1,pob) # Definimos el número de mutaciones aleatorio, dependiendo del tamaño de la población.
-            random_list = [random.randint(0, pob-1) for _ in range(num_mut)] # Creamos una lista de índices aleatorios para mutar esos rompecabezas.
+            num_mut = max(1, int(poblacion * ratio_mut)) # Definimos el número de mutaciones, dependiendo del tamaño de la población.
+            random_list = [random.randint(0, len(arreglo_rompecabezas)-1) for _ in range(num_mut)] # Creamos una lista de índices aleatorios para mutar esos rompecabezas.
+            
             for num in random_list:
                 arreglo_rompecabezas.append(self.mutacion(arreglo_rompecabezas[num])) # Mutamos los rompecabezas y los añadimos a la población.
             
@@ -510,7 +511,6 @@ class Rompecabezas:
                 arreglo_fitness.append(self.fitness(arreglo_rompecabezas[i])) # Calculamos el valor de la función fitness para cada rompecabezas y lo guardamos.
             
             indices_peores = obtener_indices_peores(arreglo_fitness, num_mut) # Obtenemos los índices de los peores rompecabezas según la función fitness.
-
             for indice in sorted(indices_peores, reverse=True):  # Eliminar de mayor a menor para no afectar los índices, es decir, nos quedamos con los mejores rompecabezas.
                 arreglo_rompecabezas.pop(indice)
                 arreglo_fitness.pop(indice)
@@ -540,9 +540,100 @@ def obtener_indices_peores(lista_fitness, num_mut):
     
     return indices_peores
 
+class Optimizar:
+    '''
+    Clase que crea un objeto Optimizar para optimizar los parámetros de población y ratio de mutación en el algoritmo evolutivo.
+    '''
+    def __init__(self, n, m):
+        """
+        Inicializa el objeto Optimizar con las dimensiones del rompecabezas.
+        Entrada:
+        - n (int): Número de renglones.
+        - m (int): Número de columnas.
+        """
+        self.n = n
+        self.m = m
+        self.matriz_solucion = Matriz(n, m).matriz  # Matriz solución base.
+    
+    def optimizar_parametros(self, generaciones=10):
+        """
+        Optimiza los parámetros de población y ratio de mutación utilizando un algoritmo evolutivo.
+        Entrada:
+        - generaciones (int): Número de generaciones para ejecutar el algoritmo.
+        Salida:
+        - (dict): Diccionario con los parámetros óptimos y el tiempo que tardó el mejor conjunto.
+        """
+        mejor_tiempo = float('inf') # Asignamos el mejor tiempo como el máximo posible.
+        mejores_parametros = None
+
+        # Inicializamos los parámetros como una lista de tuplas (población, ratio_mutación). 
+        # Se crean aleatoriamente para probar diferentes combinaciones.
+        poblacion_parametros = [
+            {"poblacion": random.randint(1, 50), "ratio_mutacion": random.uniform(0.1, 1)}
+            for _ in range(10)
+        ]
+
+        # Realizamos el algorimto evolutivo tantas veces como generaciones deseamos.
+        for generacion in range(generaciones):
+            tiempos_poblacion = [] 
+            
+            # Evaluar el tiempo de ejecución para cada conjunto de parámetros.
+            for params in poblacion_parametros:
+                print(f"[Generación {generacion + 1}] Probando parámetros: "
+                      f"Población={params['poblacion']}, Ratio Mutación={params['ratio_mutacion']:.2f}")
+                
+                rompecabezas = Rompecabezas(self.n, self.m)
+                inicio = time.time()
+                rompecabezas.algoritmo_evolutivo(
+                    self.n, self.m, self.matriz_solucion,
+                    poblacion=params["poblacion"],
+                    ratio_mut=params["ratio_mutacion"]
+                )
+                tiempo = time.time() - inicio
+                tiempos_poblacion.append((tiempo, params))
+                
+                if tiempo < mejor_tiempo: # Si es el mejor tiempo hasta ahora, guardamos el tiempo y los parámetros que lo crearon.
+                    mejor_tiempo = tiempo
+                    mejores_parametros = params
+
+            # Selección: Retener los mejores parámetros.
+            tiempos_poblacion.sort(key=lambda x: x[0])  # Ordenar por tiempo.
+            poblacion_parametros = [item[1] for item in tiempos_poblacion[:len(poblacion_parametros) // 2]] # Nos quedamos con la mitad de los mejores parámetros según su tiempo.
+
+            # Mutación y cruce: crear nuevos parámetros.
+            nuevos_parametros = []
+            for _ in range(10 - len(poblacion_parametros)): # Creamos la otra mitad de parámetros.
+                padre = random.choice(poblacion_parametros)
+                nuevo_parametro = {
+                    "poblacion": max(1, padre["poblacion"] + random.randint(-5, 5)), # Aseguramos que la población sea al menos 1, agregamos una variación.
+                    "ratio_mutacion": max(0.1, min(1, max(0.1, padre["ratio_mutacion"] + random.uniform(-0.2, 0.2)))) # Aseguramos que el ratio de mutación esté entre 0.1 y 1, agregamos una variación.
+                }
+                nuevos_parametros.append(nuevo_parametro)
+            
+            poblacion_parametros.extend(nuevos_parametros) # Agregamos los nuevos parámetros a la población.
+            print(f"[Generación {generacion + 1}] Mejor tiempo: {mejor_tiempo:.2f} segundos")
+        
+        print("\nOptimización completada.")
+        print(f"Mejores parámetros encontrados: {mejores_parametros} con tiempo {mejor_tiempo:.2f} segundos")
+        return mejores_parametros["poblacion"], mejores_parametros["ratio_mutacion"]
 
 def main():
-    Rompecabezas(15, 15)
-
+    # Dimensiones del rompecabezas.
+    n, m = 5, 5
+    # Crear una instancia de Optimizar con las dimensiones del rompecabezas
+    optimizador = Optimizar(n, m)
+    
+    # Ejecutar la optimización.
+    poblacion_optima, ratio_mutacion_optimo = optimizador.optimizar_parametros(generaciones=10)
+    
+    # Imprimir los resultados óptimos.
+    print("\nParámetros óptimos encontrados:")
+    print(f"Población: {poblacion_optima}")
+    print(f"Ratio de mutación: {ratio_mutacion_optimo:.2f}")
+    
+    # Crear un rompecabezas con los parámetros óptimos, para que lo solucione lo más rápido posible.
+    Rompecabezas(n, m, poblacion_optima, ratio_mutacion_optimo) 
+    print(f"parámetros: \n población: {poblacion_optima} \n ratio de mutación: {ratio_mutacion_optimo}")
+    
 if __name__ == "__main__":
     main()
