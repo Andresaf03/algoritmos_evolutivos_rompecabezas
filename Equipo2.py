@@ -199,7 +199,10 @@ class Rompecabezas:
         '''
         Constructor de la clase Rompecabezas, crea un rompecabezas solución a partir de una matriz secuencial y luego utiliza el algoritmo evolutivo para resolverlo. 
         Entrada: n (int) número de renglones del rompecabezas, m (int) número de columnas del rompecabezas.
-        Salida: Un rompecabezas resuelto y visualizado.
+        Salida: 
+            Ninguna, pero imprime el rompecabezas resuelto y visualizado, 
+            el número de generaciones necesarias para resolver el rompecabezas,
+            el tiempo de ejecución.
         '''
         self.n = n
         self.m = m
@@ -520,7 +523,9 @@ class Rompecabezas:
             matriz_sol (matriz) matriz solución del rompecabezas, 
             poblacion (int): tamaño de la población inicial, 
             ratio_mut (float): proporción de rompecabezas mutados en cada generación.
-        Salida: matriz_piezas (matriz) matriz de piezas resueltas.
+        Salida: 
+            matriz_piezas (matriz) matriz de piezas resueltas y 
+            generaciones (int) número de generaciones necesarias para resolver el rompecabezas.
         '''
         piezas_solucion, matriz_solucion = self.crear_grafo_solucion(matriz_sol)
         min_fitness = (num_n*num_m)*4 + (num_n*num_m) + (num_n-1)*num_m + (num_m-1)*num_n # Iniciamos el valor de fitness mínimo con el máximo posible.
@@ -553,7 +558,7 @@ class Rompecabezas:
             min_fitness = min(arreglo_fitness) # Obtenemos el valor mínimo de la función fitness de los rompecabezas de la población.
             indice = arreglo_fitness.index(min_fitness) # Obtenemos el rompecabezas con valor de función fitness mínimo.
             print(min_fitness) # Lo imprimimos para ver el avance hacia una solución.
-            generaciones += 1
+            generaciones += 1 # Una vez terminada la generación, incrementamos el contador de generaciones.
         
         return arreglo_rompecabezas[indice], generaciones # Si el ciclo se termina, regresamos el rompecabezas resuelto.
 
@@ -660,7 +665,7 @@ def main():
     poblacion_optima = 1
     ratio_mutacion_optimo = 1
     
-    '''
+    ''' #Optimización de parámetros:
     # Crear una instancia de Optimizar con las dimensiones del rompecabezas. 
     # Se recomienda usar menos de 100 piezas (y en casos de muchas piezas, menos generaciones, i.e de 2 a 5).
     optimizador = Optimizar(n, m)
