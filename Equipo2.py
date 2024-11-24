@@ -652,7 +652,7 @@ class Optimizar:
 
 def main():
     # Dimensiones del rompecabezas.
-    n, m = 15, 15
+    n, m = 20, 10
     #Argumentos por si no queremos optimizar.
     poblacion_optima = 1
     ratio_mutacion_optimo = 1
