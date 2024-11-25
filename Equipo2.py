@@ -6,6 +6,16 @@ Importamos las librerías necesarias para realizar el algoritmo evolutivo.
 import random
 import time
 
+'''
+Definición de variables globales para la función de aptitud.
+PENALIZACION_BORDE_NO_LISO indica cuando un borde no es liso.
+PENALIZACION_CONEXION_INCORRECTA indica cuando una conexión entre dos piezas es incorrecta.
+PENALIZACION_PIEZA_FUERA_DE_POSICION indica cuando una pieza no está en la posición correcta.
+'''
+PENALIZACION_BORDE_NO_LISO = 1
+PENALIZACION_CONEXION_INCORRECTA = 1
+PENALIZACION_PIEZA_FUERA_DE_POSICION = 4
+
 def copiar_matriz(matriz_original):
     """
     Crea una copia profunda de una matriz de objetos Pieza.
@@ -33,10 +43,10 @@ class PiezaNoValidaError(Exception):
     '''
     def __init__(self, mensaje):
         self.mensaje = mensaje
-        super().__init__(self.mensaje)  # Llama al constructor de la clase base para manejar el mensaje
+        super().__init__(self.mensaje)  # Llama al constructor de la clase base para manejar el mensaje.
     
     def __str__(self):
-        return f"PiezaNoValidaError: {self.mensaje}" # Regresa el mensaje de error
+        return f"PiezaNoValidaError: {self.mensaje}" # Regresa el mensaje de error.
 
 class Matriz:
     '''
@@ -120,8 +130,8 @@ class Pieza:
         '''
         Constructor de la clase Pieza.
         Entrada: v_arriba (int) valor del extremo superior, v_abajo (int) valor del extremo inferior, v_izquierda (int) valor del extremo izquierdo, v_derecha (int) valor del extremo derecho, id_pieza (int) identificador de la pieza. 
-        Los valores permitidos de los extremos son 0 (borde plano), -1 (borde hacia adentro), 1 (borde hacia afuera) y 2 (control).
-        Salida: Una pieza con los valores de los extremos, un diccionario con sus conexciones (vacías por el momento) y su identificador.
+        Los valores permitidos de los extremos son: 0 (borde plano), -1 (borde hacia adentro), 1 (borde hacia afuera) y 2 (control).
+        Salida: Una pieza con los valores de los extremos, un diccionario con sus conexiones (vacías por el momento) y su identificador.
         '''
         valores = [v_arriba, v_abajo, v_izquierda, v_derecha]
         valores_permitidos = {0, -1, 1, 2}
@@ -306,7 +316,7 @@ class Rompecabezas:
         # Crear un diccionario de piezas solución por identificador.
         piezas_por_id = {pieza.id: pieza.copiar() for pieza in piezas_solucion}
         
-        # Colocar las piezas según la matriz de identificadores aletorios.
+        # Colocar las piezas según la matriz de identificadores aleatorios.
         for i in range(n):
             for j in range(m):
                 id_pieza = matriz_ids[i][j] # Obtenemos el identificador aleatorio de la pieza.
@@ -348,7 +358,7 @@ class Rompecabezas:
             for j in range(m):
                 pieza = matriz_piezas[i][j]
                 
-                # Verificar conexión superior
+                # Verificar conexión superior.
                 if i > 0:
                     pieza_arriba = matriz_piezas[i-1][j]
                     if pieza.extremos["arr"] + pieza_arriba.extremos["aba"] != 0 or (pieza_arriba.extremos["aba"] == 0 and pieza.extremos["arr"] == 0):
@@ -356,7 +366,7 @@ class Rompecabezas:
                             f"Conexión incorrecta entre {pieza.id} y {pieza_arriba.id} (arriba)" # Indicar entre que piezas hay un error.
                         )
                 
-                # Verificar conexión izquierda
+                # Verificar conexión izquierda.
                 if j > 0:
                     pieza_izq = matriz_piezas[i][j-1]
                     if pieza.extremos["izq"] + pieza_izq.extremos["der"] != 0 or (pieza_izq.extremos["der"] == 0 and pieza.extremos["izq"] == 0):
@@ -378,7 +388,7 @@ class Rompecabezas:
         print("-" * (m * 20))
         
         for i in range(n):
-            # Primera línea: extrremos superiores de las piezas.
+            # Primera línea: extremos superiores de las piezas.
             for j in range(m):
                 print(f"      {matriz_piezas[i][j].extremos['arr']}      ", end="")
             print()
@@ -388,7 +398,7 @@ class Rompecabezas:
                 print(f"{matriz_piezas[i][j].extremos['izq']}  ({matriz_piezas[i][j].id:2d})  {matriz_piezas[i][j].extremos['der']}", end=" ")
             print()
             
-            # Tercera línea: extremos inferiores de las piezas
+            # Tercera línea: extremos inferiores de las piezas.
             for j in range(m):
                 print(f"      {matriz_piezas[i][j].extremos['aba']}      ", end="")
             print()
@@ -405,7 +415,7 @@ class Rompecabezas:
 
     def fitness(self, matriz_piezas):
         '''
-        Calcula el fitness de una matriz de piezas, esto se realiza observando que tan cercano está el rompecabezas de estar resuelto.
+        Calcula el valor de aptitud de una matriz de piezas, esto se realiza observando que tan cercano está el rompecabezas de estar resuelto.
         Entrada: matriz_piezas (matriz) matriz de piezas.
         Salida: contador_fit (int) valor de la función fitness de la matriz de piezas.
         '''
@@ -418,29 +428,29 @@ class Rompecabezas:
                 
                 # Los bordes tienen que ser 0.
                 if i == 0 and pieza_actual.extremos['arr'] != 0:
-                        contador_fit += 1
+                        contador_fit += PENALIZACION_BORDE_NO_LISO
                 if i == n-1 and pieza_actual.extremos['aba'] != 0:
-                    contador_fit += 1
+                    contador_fit += PENALIZACION_BORDE_NO_LISO
                 if j == 0 and pieza_actual.extremos['izq'] != 0:
-                        contador_fit += 1
+                        contador_fit += PENALIZACION_BORDE_NO_LISO
                 if j == m-1 and pieza_actual.extremos['der'] != 0:
-                        contador_fit += 1
+                        contador_fit += PENALIZACION_BORDE_NO_LISO
 
                 # Verificar conexión superior.
                 if i > 0:
                     pieza_arriba = matriz_piezas[i-1][j]
                     if pieza_actual.extremos["arr"] + pieza_arriba.extremos["aba"] != 0 or (pieza_arriba.extremos["aba"] == 0 and pieza_actual.extremos["arr"] == 0):
-                        contador_fit += 1
+                        contador_fit += PENALIZACION_CONEXION_INCORRECTA
                 
                 # Verificar conexión izquierda.
                 if j > 0:
                     pieza_izq = matriz_piezas[i][j-1]
                     if pieza_actual.extremos["izq"] + pieza_izq.extremos["der"] != 0 or (pieza_izq.extremos["der"] == 0 and pieza_actual.extremos["izq"] == 0):
-                        contador_fit += 1
+                        contador_fit += PENALIZACION_CONEXION_INCORRECTA
 
                 # Si la pieza no está en la posición correcta.
                 if pieza_actual.id != (pieza_actual.posicion[0]-1)*m + pieza_actual.posicion[1]:
-                    contador_fit += 4 
+                    contador_fit += PENALIZACION_PIEZA_FUERA_DE_POSICION
 
         return contador_fit
 
@@ -564,16 +574,16 @@ class Rompecabezas:
 
 def obtener_indices_peores(lista_fitness, num_mut):
     '''
-    Obtiene los índices de los peores valores de fitness de nuestra lista de romepcabezas.
-    Obtenemos los num_mut peores valores de fitness para que la población de la siguiente generación tenga el mismo tamaño.
-    Entrada: lista_fitness (lista) lista de valores de fitness, num_mut (int) número de mutaciones.
-    Salida: indices_peores (lista) lista de índices de los peores valores de fitness.
+    Obtiene los índices de los peores valores de aptitud de nuestra lista de rompecabezas.
+    Obtenemos los num_mut peores valores de aptitud para que la población de la siguiente generación tenga el mismo tamaño.
+    Entrada: lista_fitness (lista) lista de valores de aptitud, num_mut (int) número de mutaciones.
+    Salida: indices_peores (lista) lista de índices de los peores valores de aptitud.
     '''
 
    # Crear lista de tuplas (valor, índice)
     valores_indices = [(valor, i) for i, valor in enumerate(lista_fitness)]
     
-    # Ordenar por valor de fitness (mayor a menor)
+    # Ordenar por valor de aptitud (mayor a menor)
     valores_indices.sort(reverse=True)
     
     # Tomar los primeros num_mut índices
@@ -660,12 +670,13 @@ class Optimizar:
 
 def main():
     # Dimensiones del rompecabezas.
-    n, m = 10, 10
+    n, m = 15, 15
     #Argumentos por si no queremos optimizar.
     poblacion_optima = 1
     ratio_mutacion_optimo = 1
     
-    ''' #Optimización de parámetros:
+    '''
+    #Optimización de parámetros:
     # Crear una instancia de Optimizar con las dimensiones del rompecabezas. 
     # Se recomienda usar menos de 100 piezas (y en casos de muchas piezas, menos generaciones, i.e de 2 a 5).
     optimizador = Optimizar(n, m)
