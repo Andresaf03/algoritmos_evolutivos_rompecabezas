@@ -649,19 +649,26 @@ class Optimizar:
 
             # Selección: Retener los mejores parámetros.
             tiempos_poblacion.sort(key=lambda x: x[0])  # Ordenar por tiempo.
-            poblacion_parametros = [item[1] for item in tiempos_poblacion[:len(poblacion_parametros) // 2]] # Nos quedamos con la mitad de los mejores parámetros según su tiempo.
+            poblacion_parametros = [item[1] for item in tiempos_poblacion[:5]] # Nos quedamos con la mitad de los mejores parámetros según su tiempo.
 
-            # Mutación y cruce: crear nuevos parámetros.
-            nuevos_parametros = []
-            for _ in range(10 - len(poblacion_parametros)): # Creamos la otra mitad de parámetros.
-                padre = random.choice(poblacion_parametros)
-                nuevo_parametro = {
-                    "poblacion": max(1, padre["poblacion"] + random.randint(-5, 5)), # Aseguramos que la población sea al menos 1, agregamos una variación.
-                    "ratio_mutacion": max(0.1, min(1, max(0.1, padre["ratio_mutacion"] + random.uniform(-0.2, 0.2)))) # Aseguramos que el ratio de mutación esté entre 0.1 y 1, agregamos una variación.
+            # Cruce: Crear 5 nuevos parámetros combinando los mejores padres.
+            nuevos_parametros_cruce = []
+            while len(nuevos_parametros_cruce) < 5:
+                padre1, padre2 = random.sample(poblacion_parametros, 2)
+                hijo = {
+                    "poblacion": max(1, (padre1["poblacion"] + padre2["poblacion"]) // 2),
+                    "ratio_mutacion": max(0.1, min(1, (padre1["ratio_mutacion"] + padre2["ratio_mutacion"]) / 2))
                 }
-                nuevos_parametros.append(nuevo_parametro)
+                nuevos_parametros_cruce.append(hijo)
+                
+            poblacion_parametros.extend(nuevos_parametros_cruce) # Agregamos los nuevos parámetros a la población.  
+                
+            # Mutación: Alterar 3 de los individuos (pueden ser de los existentes o los nuevos).
+            for _ in range(3):
+                individuo_a_mutar = random.choice(poblacion_parametros)
+                individuo_a_mutar["poblacion"] = max(1, individuo_a_mutar["poblacion"] + random.randint(-5, 5)) # Aseguramos que la población sea al menos 1, agregamos una variación.
+                individuo_a_mutar["ratio_mutacion"] = max(0.1, min(1, individuo_a_mutar["ratio_mutacion"] + random.uniform(-0.2, 0.2))) # Aseguramos que el ratio de mutación esté entre 0.1 y 1, agregamos una variación.
             
-            poblacion_parametros.extend(nuevos_parametros) # Agregamos los nuevos parámetros a la población.
             print(f"[Generación {generacion + 1}] Mejor tiempo: {mejor_tiempo:.2f} segundos")
         
         print("\nOptimización completada.")
@@ -676,7 +683,7 @@ def main():
     ratio_mutacion_optimo = 1
     
     '''
-    #Optimización de parámetros:
+    # Optimización de parámetros:
     # Crear una instancia de Optimizar con las dimensiones del rompecabezas. 
     # Se recomienda usar menos de 100 piezas (y en casos de muchas piezas, menos generaciones, i.e de 2 a 5).
     optimizador = Optimizar(n, m)
